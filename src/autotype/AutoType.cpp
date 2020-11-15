@@ -27,6 +27,7 @@
 
 #include "autotype/AutoTypePlatformPlugin.h"
 #include "autotype/AutoTypeSelectDialog.h"
+#include "autotype/PickcharsDialog.h"
 #include "core/Config.h"
 #include "core/Database.h"
 #include "core/Entry.h"
@@ -586,6 +587,22 @@ QList<AutoTypeAction*> AutoType::createActionFromTemplate(const QString& tmpl, c
         if (!totp.isEmpty()) {
             for (const QChar& ch : totp) {
                 list.append(new AutoTypeChar(ch));
+            }
+        }
+    } else if (tmplName.compare("pickchars", Qt::CaseInsensitive) == 0) {
+        auto password = entry->resolveMultiplePlaceholders(entry->password());
+        if (!password.isEmpty()) {
+            PickcharsDialog pickcharsDialog(password);
+            if (pickcharsDialog.exec() == QDialog::Accepted) {
+                for (const auto& ch : pickcharsDialog.selectedChars()) {
+                    list.append(new AutoTypeChar(ch));
+                    if (pickcharsDialog.pressTab()) {
+                        list.append(new AutoTypeKey(Qt::Key_Tab));
+                    }
+                }
+                if (pickcharsDialog.pressTab() && !list.isEmpty()) {
+                    list.removeLast();
+                }
             }
         }
     }
